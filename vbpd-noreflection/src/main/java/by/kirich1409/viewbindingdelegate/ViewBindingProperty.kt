@@ -24,13 +24,16 @@ public abstract class ViewBindingProperty<in R : Any, T : ViewBinding>(
 
     @MainThread
     public override fun getValue(thisRef: R, property: KProperty<*>): T {
-        check(thisRef !== this.thisRef) {
-            "Instance of ViewBindingProperty can't be shared between different properties"
+        checkIsMainThread()
+        if (viewBinding != null) {
+            check(thisRef === this.thisRef) {
+                "Instance of ViewBindingProperty can't be shared between classes"
+            }
         }
 
-        checkIsMainThread()
         viewBinding?.let { return it }
 
+        this.thisRef = thisRef
         getLifecycleOwner(thisRef).lifecycle.addObserver(lifecycleObserver)
         return viewBinder(thisRef).also { viewBinding = it }
     }
